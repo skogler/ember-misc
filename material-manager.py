@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Requires Python 3.2 or higher
+# Requires Python 3 or higher
 #
 # Manages automatically generated material definitions for textures.
 # Textures that are recognized are named D.png, N.png or S.png.
 #
 
-import argparse
 from string import Template
 import fnmatch
 import os
+import sys
 
 def is_valid(material_file, material_name):
     """ Checks whether the specified material file contains the passed material name 
@@ -123,11 +123,41 @@ def main():
             "create-missing",
             "find-invalid",
             "refresh"]
+    usage = """usage: {0} [-h] <MODE>
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=modes)
-    args = parser.parse_args()
+Manages automatically generated material definitions for textures.
+Textures that are recognized are named D.png, N.png or S.png.
 
+MODE must be specified and can be one of the following:
+
+    find-missing    Finds any missing material files.
+    create-missing  Creates any missing material files.
+    find-invalid    Finds material files which do not contain a correctly named material.
+    refresh         Deletes all material files and generates them freshly.
+
+OPTIONS
+    -h Show this help text
+""".format(sys.argv[0])
+
+    if len(sys.argv) == 1:
+        print("ERROR: MODE must be specified!")
+        print(usage)
+        sys.exit(64)
+    elif len(sys.argv) > 2:
+        print("ERROR: Too many arguments")
+        print(usage)
+        sys.exit(64)
+
+    if sys.argv[1] == "-h":
+        print(usage)
+        sys.exit(0)
+
+    mode = sys.argv[1]
+
+    if mode not in modes:
+        print("ERROR: Invalid MODE specified")
+        print(usage)
+        sys.exit(64)
 
     diffuse_textures =  [os.path.join(dirpath, f)
             for dirpath, dirnames, files in os.walk(os.getcwd())
@@ -143,14 +173,14 @@ def main():
         material_name = '/global/' + material_name
 
         if not os.path.isfile(material_file):
-            if  args.mode == "find-missing":
+            if mode == "find-missing":
                 print(material_file)
-            elif args.mode == "create-missing":
+            elif mode == "create-missing":
                 generate_material(directory, material_file, material_name)
-        elif args.mode == "refresh":
+        elif mode == "refresh":
             os.remove(material_file)
             generate_material(directory, material_file, material_name)
-        elif args.mode == "find-invalid":
+        elif mode == "find-invalid":
             if not is_valid(material_file, material_name):
                 print(material_file)
 
